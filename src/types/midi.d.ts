@@ -1,7 +1,7 @@
 declare module "midi" {
   import { EventEmitter } from "events";
 
-  class Input extends EventEmitter {
+  export class Input extends EventEmitter {
     constructor();
 
     getPortCount(): number;
@@ -16,7 +16,7 @@ declare module "midi" {
     ): void;
   }
 
-  class Output {
+  export class Output {
     constructor();
 
     getPortCount(): number;

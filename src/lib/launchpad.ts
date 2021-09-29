@@ -4,7 +4,7 @@ import R from "ramda";
 
 enum KeyState {
   Down = "down",
-  Up = "up",
+  Up = "up"
 }
 
 const keyState = (byte: number): KeyState =>
@@ -16,7 +16,7 @@ type Button = [ButtonType, number, number];
 export enum ButtonType {
   Grid = "grid",
   Top = "top",
-  Right = "right",
+  Right = "right"
 }
 
 type KeyPressEvent = [Button, KeyState];
@@ -26,13 +26,13 @@ export enum Color {
   Red = "red",
   Amber = "amber",
   Yellow = "yellow",
-  Off = "off",
+  Off = "off"
 }
 
 export enum Intensity {
   Low = 1,
   Medium = 2,
-  High = 3,
+  High = 3
 }
 
 const unmapButton = ([type, x, y]: Button): number => {
@@ -98,17 +98,25 @@ declare class LaunchpadEventEmitter extends EventEmitter {
   on(event: string, listener: Function): this;
 }
 
-export const controller = (autostart = true) => {
+interface LaunchpadController {
+  connect: (port?: number) => void;
+  disconnect: () => void;
+  setColor: (button: Button, color: Color, intensity?: Intensity) => void;
+  reset: () => void;
+  events: LaunchpadEventEmitter;
+}
+
+export const controller = (autostart = true): LaunchpadController => {
   const events = new LaunchpadEventEmitter();
 
   const state = {
     connected: false,
     input: null,
-    output: null,
+    output: null
   };
 
-  const instance = {
-    connect: (port?: number) => {
+  const instance: LaunchpadController = {
+    connect: port => {
       if (state.connected) {
         throw new Error("Cannot connected: already connected to Launchpad");
       }
@@ -141,18 +149,14 @@ export const controller = (autostart = true) => {
       events.emit("disconnected");
     },
     events,
-    reset: (): void => state.output.sendMessage([176, 0, 0]),
-    setColor: (
-      button: Button,
-      color: Color,
-      intensity: Intensity = Intensity.High
-    ): void => {
+    reset: () => state.output.sendMessage([176, 0, 0]),
+    setColor: (button, color, intensity = Intensity.High) => {
       state.output.sendMessage([
         144,
         unmapButton(button),
-        getColorCommand(color, intensity),
+        getColorCommand(color, intensity)
       ]);
-    },
+    }
   };
 
   if (autostart) {
