@@ -7,14 +7,13 @@ Only tested/implemented on Launchpad Mini so far, likely to not work on other de
 
 ### Basic connection and disconnection to a launchpad device
 
-```
-import {controller, } from 'launchpad-controller';
+```js
+import {controller} from 'launchpad-controller';
 
 // spawn a controller instance
 const launchpad = controller();
 
-// do  stuff
-launchpad.setColor()
+// Do stuff
 
 // disconnect
 launchpad.disconnect();
@@ -24,7 +23,7 @@ launchpad.disconnect();
 
 You may want to do something once the connection has been established. The even emitter interface will provide `connected` / `disconnected` events for this purpose. You can also customise the connection port instead of allowing the controller to use the first available launchpad device.
 
-```
+```js
 // Passing false to controller() will prevent auto connection (you'll need to call connect() manually)
 const launchpad = controller(false);
 
@@ -49,7 +48,7 @@ launchpad.disconnect();
 
 This is the interface to the buttons on your Launchpad.
 
-```
+```js
 const launchpad = controller();
 
 launchpad.events.on("key", console.log);
@@ -66,8 +65,7 @@ launchpad.events.on("key", console.log);
 
 ### Changing board colours
 
-```
-
+```js
 const launchpad = controller();
 
 launchpad.setColor(
@@ -78,15 +76,14 @@ launchpad.setColor(
 
 // Available colours: Red, Green, Amber, Yellow, Off
 // Available intensities: High, Medium, Low
-
 ```
 
 ### Resetting the board
 
-```
+```js
 const launchpad = controller();
 
-...
+// Do stuff
 
 // Send a reset message to the midi device, blanking all the keys.
 launchpad.reset();
