@@ -1,5 +1,6 @@
 # https://circleci.com/docs/2.0/language-javascript/
-version: 2.1
+
+version: 2.0
 jobs:
   main:
     docker:
