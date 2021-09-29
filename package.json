@@ -1,0 +1,49 @@
+{
+  "name": "node-launchpad",
+  "version": "1.0.0",
+  "description": "API for interacting with Launchpad devices",
+  "main": "build/main/index.js",
+  "typings": "build/main/index.d.ts",
+  "module": "build/module/index.js",
+  "repository": "https://github.com/tabazevedo/node-launchpad",
+  "license": "MIT",
+  "keywords": [],
+  "scripts": {
+    "build": "yarn clean; yarn build:main; yarn build:module",
+    "build:main": "tsc -p tsconfig.json",
+    "build:module": "tsc -p tsconfig.module.json",
+    "build:watch": "yarn clean; yarn build:main -w & yarn build:module -w",
+    "fix": "yarn fix:prettier; yarn fix:eslint",
+    "fix:prettier": "prettier \"src/**/*.ts\" --write",
+    "fix:eslint": "eslint --fix \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" && prettier \"src/**/*.ts\" --list-different",
+    "test": "yarn build:main; ava",
+    "clean": "rimraf build test"
+  },
+  "engines": {
+    "node": ">=16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^13.7.1",
+    "@types/ramda": "^0.26.41",
+    "@typescript-eslint/parser": "^2.19.2",
+    "ava": "^3.3.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-config-typescript": "^3.0.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "prettier": "^1.19.1",
+    "rimraf": "^3.0.2",
+    "typescript": "^3.7.5"
+  },
+  "ava": {
+    "files": [
+      "build/main/**/*.spec.js"
+    ]
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.19.2",
+    "midi": "^1.0.0",
+    "ramda": "^0.27.0"
+  }
+}

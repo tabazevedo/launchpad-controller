@@ -1,0 +1,11 @@
+.circleci
+src
+tsconfig.json
+tsconfig.module.json
+tslint.json
+.eslintrc
+.prettierignore
+.vscode
+**/*.spec.*
+.nyc_output
+*.log
