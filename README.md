@@ -59,7 +59,7 @@ launchpad.events.on("key", console.log);
    e.g. [[ButtonType.Grid, 0, 0], KeyState.Up] === [["grid", 0, 0], "up"] */
 
 /* You can also listen to just "up" or "down" events, in which case you'll
-   only receive the button that was pressed i.e. [ButtonType.Top, 3, 0] */
+   only receive the button that was pressed i.e. [ButtonType.Automap, 3, 0] */
 ```
 
 

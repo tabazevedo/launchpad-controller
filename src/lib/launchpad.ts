@@ -1,50 +1,55 @@
-import { EventEmitter } from "events";
 import midi from "midi";
 import R from "ramda";
 
-enum KeyState {
-  Down = "down",
-  Up = "up",
-}
+import {
+  KeyState,
+  Button,
+  MidiMessage,
+  KeyPressEvent,
+  ButtonType,
+  Color,
+  Intensity,
+  LaunchpadEventEmitter,
+  LaunchpadController,
+  ControllerState,
+} from "./types";
 
 const keyState = (byte: number): KeyState =>
   byte > 0 ? KeyState.Down : KeyState.Up;
 
-type MidiMessage = [number, number, number];
-type Button = [ButtonType, number, number];
+const GRID_BUTTON_CODE = 144;
+const SCENE_BUTTON_CODE = 144;
+const AUTOMAP_BUTTON_CODE = 176;
 
-export enum ButtonType {
-  Grid = "grid",
-  Top = "top",
-  Right = "right",
-}
-
-type KeyPressEvent = [Button, KeyState];
-
-export enum Color {
-  Green = "green",
-  Red = "red",
-  Amber = "amber",
-  Yellow = "yellow",
-  Off = "off",
-}
-
-export enum Intensity {
-  Low = 1,
-  Medium = 2,
-  High = 3,
-}
-
-const unmapButton = ([type, x, y]: Button): number => {
+// Mapping of button types to code for reading/writing messages to that button
+const getButtonMessageCode = ([type]: Button): number => {
   switch (type) {
-    case ButtonType.Top:
-      return x + 104;
+    case ButtonType.Automap:
+      return AUTOMAP_BUTTON_CODE;
+    case ButtonType.Scene:
+      return SCENE_BUTTON_CODE;
+    case ButtonType.Grid:
+      return GRID_BUTTON_CODE;
     default:
-      return y * 16 + x;
+      throw new Error(`Unknown button type: ${type}`);
   }
 };
 
-const getColorCommand = (color: Color, intensity: Intensity): number => {
+// Get the decimal positional value of a button, based on type and coordinate
+const getButtonPositionCode = ([type, x, y]: Button): number => {
+  switch (type) {
+    case ButtonType.Automap:
+      return x + 104;
+    case ButtonType.Scene:
+      return y * 16 + 8;
+    case ButtonType.Grid:
+      return y * 16 + x;
+    default:
+      throw new Error(`Unknown button type: ${type}`);
+  }
+};
+
+const getColorCode = (color: Color, intensity: Intensity): number => {
   switch (color) {
     case Color.Green:
       return 0b10000 * intensity;
@@ -60,23 +65,25 @@ const getColorCommand = (color: Color, intensity: Intensity): number => {
 };
 
 const mapKeyPress = ([status, key, state]: MidiMessage): KeyPressEvent => {
-  if (status === 176) {
-    const x = key - 104;
-    return [[ButtonType.Top, x, 0], keyState(state)];
-  }
-
-  if (status === 144) {
-    const x = key % 16;
-    const y = (key - x) / 16;
-
-    if (x === 8) {
-      return [[ButtonType.Right, 8, y], keyState(state)];
+  switch (status) {
+    case AUTOMAP_BUTTON_CODE: {
+      const x = key - 104;
+      return [[ButtonType.Automap, x, 0], keyState(state)];
     }
+    case SCENE_BUTTON_CODE:
+    case GRID_BUTTON_CODE: {
+      const x = key % 16;
+      const y = (key - x) / 16;
 
-    return [[ButtonType.Grid, x, y], keyState(state)];
+      if (x === 8) {
+        return [[ButtonType.Scene, 0, y], keyState(state)];
+      }
+
+      return [[ButtonType.Grid, x, y], keyState(state)];
+    }
+    default:
+      throw new Error(`Unrecognised keypress code: ${status}`);
   }
-
-  throw new Error(`Unrecognised keypress: ${status}`);
 };
 
 const getFirstLaunchpadDevicePort = (io: midi.Input | midi.Output): number => {
@@ -90,36 +97,6 @@ const getFirstLaunchpadDevicePort = (io: midi.Input | midi.Output): number => {
 
   return port;
 };
-
-interface LaunchpadEventEmitter extends EventEmitter {
-  on(event: "key", listener: (event: KeyPressEvent) => void): this;
-  on(event: "up", listener: (button: Button) => void): this;
-  on(event: "down", listener: (button: Button) => void): this;
-  on(event: "connect", listener: () => void): this;
-  on(event: "disconnect", listener: () => void): this;
-}
-
-class LaunchpadEventEmitter extends EventEmitter {}
-
-type LaunchpadController = {
-  connect: (port?: number) => void;
-  disconnect: () => void;
-  setColor: (button: Button, color: Color, intensity?: Intensity) => void;
-  reset: () => void;
-  events: LaunchpadEventEmitter;
-};
-
-type ControllerState =
-  | {
-      connected: true;
-      input: midi.Input;
-      output: midi.Output;
-    }
-  | {
-      connected: false;
-      input: null;
-      output: null;
-    };
 
 export const controller = (autostart = true): LaunchpadController => {
   const events = new LaunchpadEventEmitter();
@@ -176,12 +153,13 @@ export const controller = (autostart = true): LaunchpadController => {
       if (state.connected) state.output.sendMessage([176, 0, 0]);
     },
     setColor: (button, color, intensity = Intensity.High) => {
-      if (state.connected)
+      if (state.connected) {
         state.output.sendMessage([
-          144,
-          unmapButton(button),
-          getColorCommand(color, intensity),
+          getButtonMessageCode(button),
+          getButtonPositionCode(button),
+          getColorCode(color, intensity),
         ]);
+      }
     },
   };
 
