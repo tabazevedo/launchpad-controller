@@ -1,6 +1,6 @@
 {
   "name": "launchpad-controller",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "API for interacting with Launchpad devices",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -25,6 +25,7 @@
   "devDependencies": {
     "@types/node": "^13.7.1",
     "@types/ramda": "^0.26.41",
+    "@typescript-eslint/eslint-plugin": "^2.19.2",
     "@typescript-eslint/parser": "^2.19.2",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.0",
@@ -35,7 +36,6 @@
     "typescript": "^3.7.5"
   },
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^2.19.2",
     "midi": "^1.0.0",
     "ramda": "^0.27.0"
   }
