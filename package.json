@@ -1,11 +1,11 @@
 {
-  "name": "node-launchpad",
+  "name": "launchpad-controller",
   "version": "1.0.0",
   "description": "API for interacting with Launchpad devices",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "repository": "https://github.com/tabazevedo/node-launchpad",
+  "repository": "https://github.com/tabazevedo/launchpad-controller",
   "license": "MIT",
   "keywords": [],
   "scripts": {
