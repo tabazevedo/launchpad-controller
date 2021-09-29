@@ -4,7 +4,7 @@ import R from "ramda";
 
 enum KeyState {
   Down = "down",
-  Up = "up"
+  Up = "up",
 }
 
 const keyState = (byte: number): KeyState =>
@@ -16,7 +16,7 @@ type Button = [ButtonType, number, number];
 export enum ButtonType {
   Grid = "grid",
   Top = "top",
-  Right = "right"
+  Right = "right",
 }
 
 type KeyPressEvent = [Button, KeyState];
@@ -26,13 +26,13 @@ export enum Color {
   Red = "red",
   Amber = "amber",
   Yellow = "yellow",
-  Off = "off"
+  Off = "off",
 }
 
 export enum Intensity {
   Low = 1,
   Medium = 2,
-  High = 3
+  High = 3,
 }
 
 const unmapButton = ([type, x, y]: Button): number => {
@@ -95,37 +95,50 @@ declare class LaunchpadEventEmitter extends EventEmitter {
   on(event: "key", listener: (event: KeyPressEvent) => void): this;
   on(event: "up", listener: (button: Button) => void): this;
   on(event: "down", listener: (button: Button) => void): this;
-  on(event: string, listener: Function): this;
+  on(event: "connect", listener: () => void): this;
+  on(event: "disconnect", listener: () => void): this;
 }
 
-interface LaunchpadController {
+type LaunchpadController = {
   connect: (port?: number) => void;
   disconnect: () => void;
   setColor: (button: Button, color: Color, intensity?: Intensity) => void;
   reset: () => void;
   events: LaunchpadEventEmitter;
-}
+};
+
+type ControllerState =
+  | {
+      connected: true;
+      input: midi.Input;
+      output: midi.Output;
+    }
+  | {
+      connected: false;
+      input: null;
+      output: null;
+    };
 
 export const controller = (autostart = true): LaunchpadController => {
   const events = new LaunchpadEventEmitter();
 
-  const state = {
+  let state: ControllerState = {
     connected: false,
     input: null,
-    output: null
+    output: null,
   };
 
   const instance: LaunchpadController = {
-    connect: port => {
+    connect: (port) => {
       if (state.connected) {
         throw new Error("Cannot connected: already connected to Launchpad");
       }
 
-      state.input = new midi.Input();
-      state.output = new midi.Output();
-
-      state.input.openPort(port || getFirstLaunchpadDevicePort(state.input));
-      state.output.openPort(port || getFirstLaunchpadDevicePort(state.output));
+      state = {
+        connected: true,
+        input: new midi.Input(),
+        output: new midi.Output(),
+      };
 
       state.input.on("message", (_: number, message: MidiMessage) => {
         const event = mapKeyPress(message);
@@ -136,27 +149,37 @@ export const controller = (autostart = true): LaunchpadController => {
         if (keyState === KeyState.Down) events.emit("down", key);
       });
 
-      state.connected = true;
+      state.output.openPort(port || getFirstLaunchpadDevicePort(state.output));
+
       events.emit("connected");
     },
     disconnect: () => {
       if (!state.connected) {
         throw new Error("Cannot disconnect: no active connection to Launchpad");
       }
+
       state.input.closePort();
       state.output.closePort();
-      state.connected = false;
+      state = {
+        connected: false,
+        input: null,
+        output: null,
+      };
+
       events.emit("disconnected");
     },
     events,
-    reset: () => state.output.sendMessage([176, 0, 0]),
+    reset: () => {
+      if (state.connected) state.output.sendMessage([176, 0, 0]);
+    },
     setColor: (button, color, intensity = Intensity.High) => {
-      state.output.sendMessage([
-        144,
-        unmapButton(button),
-        getColorCommand(color, intensity)
-      ]);
-    }
+      if (state.connected)
+        state.output.sendMessage([
+          144,
+          unmapButton(button),
+          getColorCommand(color, intensity),
+        ]);
+    },
   };
 
   if (autostart) {

@@ -1,5 +1,5 @@
 {
-  "extends": ["typescript", "typescript/prettier"],
+  "extends": ["typescript", "prettier"],
   "env": {
     "node": true
   }
