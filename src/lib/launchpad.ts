@@ -149,6 +149,7 @@ export const controller = (autostart = true): LaunchpadController => {
         if (keyState === KeyState.Down) events.emit("down", key);
       });
 
+      state.input.openPort(port || getFirstLaunchpadDevicePort(state.input));
       state.output.openPort(port || getFirstLaunchpadDevicePort(state.output));
 
       events.emit("connected");
