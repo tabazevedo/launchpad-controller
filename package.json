@@ -17,8 +17,7 @@
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:eslint": "eslint --fix \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" && prettier \"src/**/*.ts\" --list-different",
-    "test": "yarn build:main; ava",
-    "clean": "rimraf build test"
+    "clean": "rimraf build"
   },
   "engines": {
     "node": ">=16.0"
@@ -27,7 +26,6 @@
     "@types/node": "^13.7.1",
     "@types/ramda": "^0.26.41",
     "@typescript-eslint/parser": "^2.19.2",
-    "ava": "^3.3.0",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.0",
     "eslint-config-typescript": "^3.0.0",
@@ -35,11 +33,6 @@
     "prettier": "^1.19.1",
     "rimraf": "^3.0.2",
     "typescript": "^3.7.5"
-  },
-  "ava": {
-    "files": [
-      "build/main/**/*.spec.js"
-    ]
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^2.19.2",

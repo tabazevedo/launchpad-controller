@@ -3,8 +3,8 @@ import midi from "midi";
 import R from "ramda";
 
 enum KeyState {
-  Down,
-  Up
+  Down = "down",
+  Up = "up",
 }
 
 const keyState = (byte: number): KeyState =>
@@ -14,25 +14,25 @@ type MidiMessage = [number, number, number];
 type Button = [ButtonType, number, number];
 
 export enum ButtonType {
-  Grid,
-  Top,
-  Right
+  Grid = "grid",
+  Top = "top",
+  Right = "right",
 }
 
 type KeyPressEvent = [Button, KeyState];
 
 export enum Color {
-  Green,
-  Red,
-  Amber,
-  Yellow,
-  Off
+  Green = "green",
+  Red = "red",
+  Amber = "amber",
+  Yellow = "yellow",
+  Off = "off",
 }
 
 export enum Intensity {
   Low = 1,
   Medium = 2,
-  High = 3
+  High = 3,
 }
 
 const unmapButton = ([type, x, y]: Button): number => {
@@ -79,9 +79,7 @@ const mapKeyPress = ([status, key, state]: MidiMessage): KeyPressEvent => {
   throw new Error(`Unrecognised keypress: ${status}`);
 };
 
-const getFirstLaunchpadDevicePort = (
-  io: midi.NodeMidiInput | midi.NodeMidiOutput
-): number => {
+const getFirstLaunchpadDevicePort = (io: midi.Input | midi.Output): number => {
   const port = R.range(0, io.getPortCount()).findIndex(
     (_, index) => io.getPortName(index).indexOf("Launchpad") >= 0
   );
@@ -93,46 +91,73 @@ const getFirstLaunchpadDevicePort = (
   return port;
 };
 
-declare interface LaunchpadEventEmitter {
+declare class LaunchpadEventEmitter extends EventEmitter {
   on(event: "key", listener: (event: KeyPressEvent) => void): this;
   on(event: "up", listener: (button: Button) => void): this;
   on(event: "down", listener: (button: Button) => void): this;
   on(event: string, listener: Function): this;
 }
 
-class LaunchpadEventEmitter extends EventEmitter {}
-
-export function start(port?: number) {
+export const controller = (autostart = true) => {
   const events = new LaunchpadEventEmitter();
 
-  const input = new midi.input();
-  const output = new midi.output();
+  const state = {
+    connected: false,
+    input: null,
+    output: null,
+  };
 
-  input.openPort(port || getFirstLaunchpadDevicePort(input));
-  output.openPort(port || getFirstLaunchpadDevicePort(output));
+  const instance = {
+    connect: (port?: number) => {
+      if (state.connected) {
+        throw new Error("Cannot connected: already connected to Launchpad");
+      }
 
-  input.on("message", (_: number, message: MidiMessage) => {
-    const event = mapKeyPress(message);
-    const [key, keyState] = event;
+      state.input = new midi.Input();
+      state.output = new midi.Output();
 
-    events.emit("key", event);
-    if (keyState === KeyState.Up) events.emit("up", key);
-    if (keyState === KeyState.Down) events.emit("down", key);
-  });
+      state.input.openPort(port || getFirstLaunchpadDevicePort(state.input));
+      state.output.openPort(port || getFirstLaunchpadDevicePort(state.output));
 
-  return {
+      state.input.on("message", (_: number, message: MidiMessage) => {
+        const event = mapKeyPress(message);
+        const [key, keyState] = event;
+
+        events.emit("key", event);
+        if (keyState === KeyState.Up) events.emit("up", key);
+        if (keyState === KeyState.Down) events.emit("down", key);
+      });
+
+      state.connected = true;
+      events.emit("connected");
+    },
     disconnect: () => {
-      input.closePort();
-      output.closePort();
+      if (!state.connected) {
+        throw new Error("Cannot disconnect: no active connection to Launchpad");
+      }
+      state.input.closePort();
+      state.output.closePort();
+      state.connected = false;
+      events.emit("disconnected");
     },
     events,
-    reset: (): void => output.sendMessage([176, 0, 0]),
-    setColor: (button: Button, color: Color, intensity: Intensity): void => {
-      output.sendMessage([
+    reset: (): void => state.output.sendMessage([176, 0, 0]),
+    setColor: (
+      button: Button,
+      color: Color,
+      intensity: Intensity = Intensity.High
+    ): void => {
+      state.output.sendMessage([
         144,
         unmapButton(button),
-        getColorCommand(color, intensity)
+        getColorCommand(color, intensity),
       ]);
-    }
+    },
   };
-}
+
+  if (autostart) {
+    instance.connect();
+  }
+
+  return instance;
+};

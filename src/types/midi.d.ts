@@ -1,7 +1,7 @@
 declare module "midi" {
   import { EventEmitter } from "events";
 
-  class NodeMidiInput extends EventEmitter {
+  class Input extends EventEmitter {
     constructor();
 
     getPortCount(): number;
@@ -16,7 +16,7 @@ declare module "midi" {
     ): void;
   }
 
-  class NodeMidiOutput extends EventEmitter {
+  class Output {
     constructor();
 
     getPortCount(): number;
@@ -26,13 +26,4 @@ declare module "midi" {
     closePort(): void;
     sendMessage(message: Array<number>): void;
   }
-
-  // What is this fuckery?
-  const input: {
-    new (): NodeMidiInput;
-  };
-
-  const output: {
-    new (): NodeMidiOutput;
-  };
 }

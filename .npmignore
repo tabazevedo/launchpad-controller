@@ -6,6 +6,5 @@ tslint.json
 .eslintrc
 .prettierignore
 .vscode
-**/*.spec.*
 .nyc_output
 *.log
