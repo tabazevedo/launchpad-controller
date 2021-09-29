@@ -91,13 +91,15 @@ const getFirstLaunchpadDevicePort = (io: midi.Input | midi.Output): number => {
   return port;
 };
 
-declare class LaunchpadEventEmitter extends EventEmitter {
+interface LaunchpadEventEmitter extends EventEmitter {
   on(event: "key", listener: (event: KeyPressEvent) => void): this;
   on(event: "up", listener: (button: Button) => void): this;
   on(event: "down", listener: (button: Button) => void): this;
   on(event: "connect", listener: () => void): this;
   on(event: "disconnect", listener: () => void): this;
 }
+
+class LaunchpadEventEmitter extends EventEmitter {}
 
 type LaunchpadController = {
   connect: (port?: number) => void;
